@@ -8,7 +8,7 @@ from django.db import models, transaction
 from common import models as common_models
 from .utils import name_validator
 from .mixins import AbstractProjectResourceModel
-from ..inventory import AnsibleUIInventory
+from ..inventory import LocalModelInventory
 
 
 __all__ = ['ClusterHost', 'ClusterGroup', 'Host', 'Group', 'Inventory']
@@ -169,7 +169,7 @@ class Inventory:
         return groups
 
     def as_object(self):
-        return AnsibleUIInventory(self)
+        return LocalModelInventory(self)
 
     def get_data_yaml(self):
         data = {}
