@@ -1,19 +1,18 @@
 from rest_framework import viewsets
 from rest_framework.generics import ListAPIView
 
-from .models import Cluster, Node, Role, DeployExecution,Offline
+from .models import Cluster, Node, Role, DeployExecution, Offline
 from .serializers import (
     ClusterSerializer, NodeSerializer, RoleSerializer,
-    DeployReadExecutionSerializer,OfflineSerializer
+    DeployReadExecutionSerializer, OfflineSerializer
 )
 from .mixin import ClusterResourceAPIMixin
 from .tasks import start_deploy_execution
 
 import os
 import yaml
-#导入离线包路径
+# 导入离线包路径
 from fit2ansible.settings import OFFLINES_DIR
-
 
 
 class ClusterViewSet(viewsets.ModelViewSet):
@@ -47,7 +46,8 @@ class DeployExecutionViewSet(ClusterResourceAPIMixin, viewsets.ModelViewSet):
         )
         return instance
 
-#离线包视图
+
+# 离线包视图
 class OfflineViewSet(viewsets.ModelViewSet):
     queryset = Offline.objects.all()
     serializer_class = OfflineSerializer
@@ -59,27 +59,24 @@ class OfflineViewSet(viewsets.ModelViewSet):
 
         if all_offline_dir:
             for offline_dir in all_offline_dir:
-                #获取文件夹里的内容，并读取
+                # 获取文件夹里的内容，并读取
                 if not self.queryset.filter(name=offline_dir):
-                    #读取文件内容并保存
-                    all_offline_file = os.listdir(os.path.join(OFFLINES_DIR,offline_dir))
+                    # 读取文件内容并保存
+                    all_offline_file = os.listdir(os.path.join(OFFLINES_DIR, offline_dir))
 
                     for offline_file in all_offline_file:
-                        #构造文件绝对路径
-                        abs_file = OFFLINES_DIR+'/'+offline_dir+'/'+offline_file
-                        #打开文件，读取文件内容
-                        with open(abs_file,'r') as f:
+                        # 构造文件绝对路径
+                        abs_file = OFFLINES_DIR + '/' + offline_dir + '/' + offline_file
+                        abs_file_dir = OFFLINES_DIR + '/' + offline_dir
+                        # 打开文件，读取文件内容
+                        with open(abs_file, 'r') as f:
                             if abs_file.endswith('.yml'):
                                 file_content = f.read()
-                                #创建保存数据
-                                Offline.objects.create(name = offline_dir,
-                                                       path = abs_file,
-                                                       remark = offline_dir,
-                                                       content_yml = file_content
+                                # 创建保存数据
+                                Offline.objects.create(name=offline_dir,
+                                                       path=abs_file_dir,
+                                                       remark=offline_dir,
+                                                       content_yml=file_content
                                                        )
 
         return super().get_queryset()
-
-
-
-
