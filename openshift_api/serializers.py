@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.shortcuts import reverse
 
 from ansible_api.serializers import HostSerializer, GroupSerializer, ProjectSerializer
-from .models import Cluster, Node, Role, DeployExecution
+from .models import Cluster, Node, Role, DeployExecution,Offline
 
 
 class ClusterSerializer(ProjectSerializer):
@@ -71,3 +71,11 @@ class DeployReadExecutionSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_log_ws_url(obj):
         return '/ws/tasks/{}/log/'.format(obj.id)
+
+ #离线包序列化类
+class OfflineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Offline
+        fields = [
+            'name','path','remark','is_active','content_yml'
+        ]

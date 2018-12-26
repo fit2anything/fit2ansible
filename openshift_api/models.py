@@ -1,4 +1,5 @@
 import os
+import uuid
 
 from django.conf import settings
 from django.db import models
@@ -6,6 +7,8 @@ from django.db import models
 from ansible_api.models import Project, Host, Group, Playbook
 from ansible_api.models.mixins import AbstractProjectResourceModel, AbstractExecutionModel
 from ansible_api.signals import pre_execution_start, post_execution_start
+from django.utils.translation import ugettext_lazy as _
+from datetime import datetime
 
 
 class Cluster(Project):
@@ -33,6 +36,7 @@ class Cluster(Project):
             }
         ]
         for data in playbooks_data:
+            #playbook_set？？
             self.playbook_set.create(
                 name=data["name"], alias=data["alias"], type=Playbook.TYPE_GIT,
                 git={"repo": os.path.join(settings.BASE_DIR, "data", "openshift-ansible"), "branch": version},
@@ -153,6 +157,11 @@ class Role(Group):
     def osev3(cls):
         return cls.objects.get(name=cls.ROLE_OSEv3)
 
+        # try:
+        #     return cls.objects.get(name=cls.ROLE_OSEv3)
+        # except:
+        #     return cls()
+
     @classmethod
     def compute(cls):
         return cls.objects.get(name=cls.ROLE_COMPUTE)
@@ -211,3 +220,47 @@ class DeployExecution(AbstractProjectResourceModel, AbstractExecutionModel):
                 break
         post_execution_start.send(self.__class__, execution=self, result=result)
         return result
+
+
+#离线包的model
+class Offline(models.Model):
+    id = models.UUIDField(default=uuid.uuid4, primary_key=True)
+    name = models.CharField(max_length=20,unique=True,verbose_name=_('Name'))
+    path = models.FilePathField(max_length=1000,verbose_name=_('Path'))
+    remark = models.CharField(null=True,blank=True,max_length=256,verbose_name=_('Remark'))
+    is_active = models.BooleanField(default='1',verbose_name=_('Is Active'))
+    # content = JsonDictTextField(blank=True, null=True,verbose_name=_('Content'))
+    content_yml = models.TextField(blank=True, null=True,verbose_name=_('Content'))
+    create_time = models.DateTimeField(default=datetime.now,verbose_name=_('Create time'))
+
+    def __str__(self):
+        return self.name
+
+
+    class Meta:
+        verbose_name = '离线包'
+        verbose_name_plural = verbose_name
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
