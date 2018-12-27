@@ -2,15 +2,25 @@ from rest_framework import serializers
 from django.shortcuts import reverse
 
 from ansible_api.serializers import HostSerializer, GroupSerializer, ProjectSerializer
-from .models import Cluster, Node, Role, DeployExecution,Offline
+from .models import Cluster, Node, Role, DeployExecution, Offline
+
+
+# 离线包序列化类
+class OfflineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Offline
+        fields = [
+            'name', 'path', 'remark', 'is_active', 'content_yml'
+        ]
 
 
 class ClusterSerializer(ProjectSerializer):
-    configs = serializers.JSONField(read_only=True)
+    # offline = OfflineSerializer(many=False)
+    create_time = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = Cluster
-        fields = ['id', 'name', 'configs', 'comment']
+        fields = ['id', 'name', 'offline_name', 'status', 'create_time','offline']
         read_only_fields = ['id']
 
 
@@ -71,11 +81,3 @@ class DeployReadExecutionSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_log_ws_url(obj):
         return '/ws/tasks/{}/log/'.format(obj.id)
-
- #离线包序列化类
-class OfflineSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Offline
-        fields = [
-            'name','path','remark','is_active','content_yml'
-        ]

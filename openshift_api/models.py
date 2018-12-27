@@ -12,53 +12,13 @@ from datetime import datetime
 
 
 class Cluster(Project):
-    STAGE1_NAME = "1-offline-package-prepare"
-    STAGE2_NAME = "2-prerequisites-check"
-    STAGE3_NAME = "3-deploy-cluster"
+    status=models.CharField(max_length=20,verbose_name=_('Status'),null=True,blank=True)
+    offline=models.ForeignKey('Offline',on_delete=models.CASCADE,related_name='clusters',null=True,blank=True)
+    create_time = models.DateTimeField(default=datetime.now, verbose_name=_('Create time'))
 
-    class Meta:
-        proxy = True
-
-    def create_playbooks(self, version):
-        playbooks_data = [
-            {
-                "name": self.STAGE1_NAME,
-                "alias": "playbooks/offline_prepare.yml",
-                "comment": "1-离线包准备"
-            }, {
-                "name": self.STAGE2_NAME,
-                "alias": "playbooks/prerequisites.yml",
-                "comment": "2-环境准备和依赖检查"
-            }, {
-                "name": self.STAGE3_NAME,
-                "alias": "playbooks/deploy_cluster.yml",
-                "comment": "3-部署集群"
-            }
-        ]
-        for data in playbooks_data:
-            #playbook_set？？
-            self.playbook_set.create(
-                name=data["name"], alias=data["alias"], type=Playbook.TYPE_GIT,
-                git={"repo": os.path.join(settings.BASE_DIR, "data", "openshift-ansible"), "branch": version},
-                comment=data["comment"]
-            )
-
-    def deploy(self):
-        execution = DeployExecution.objects.create(project=self)
-        return execution.start()
-
-    def configs(self):
-        self.change_to()
-        return Role.osev3().vars
-
-    def save(self, force_insert=False, force_update=False, using=None,
-             update_fields=None):
-        instance = super().save(force_insert=force_insert, force_update=force_update,
-                                using=using, update_fields=update_fields)
-        Role.create_internal_roles(self)
-        Node.create_localhost()
-        self.create_playbooks('release-3.10')
-        return instance
+    @property
+    def offline_name(self):
+        return self.offline.name
 
 
 class Node(Host):
