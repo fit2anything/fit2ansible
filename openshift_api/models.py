@@ -26,7 +26,7 @@ class Node(Host):
 
     @property
     def roles(self):
-        return self.groups.name
+        return self.groups
 
     @roles.setter
     def roles(self, value):

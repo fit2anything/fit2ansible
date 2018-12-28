@@ -21,4 +21,3 @@ urlpatterns = [
 
 ] + router.urls + cluster_router.urls
 
-

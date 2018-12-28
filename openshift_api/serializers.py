@@ -20,19 +20,30 @@ class ClusterSerializer(ProjectSerializer):
 
     class Meta:
         model = Cluster
-        fields = ['id', 'name', 'offline_name', 'status', 'create_time','offline']
+        fields = ['id', 'name', 'offline_name', 'status', 'create_time', 'offline']
         read_only_fields = ['id']
 
 
-#节点序列化器
-class NodeSerializer(serializers.ModelSerializer):
-    #设置只写字段，返回数据的时候不显示
-    username = serializers.CharField(write_only=True)
-    password = serializers.CharField(write_only=True)
+# 节点序列化器
+class NodeSerializer(HostSerializer):
+    roles = serializers.SlugRelatedField(many=True, read_only=True, queryset=Role.objects.all(),
+                                         slug_field='name', required=False
+                                         )
+
+    # 把roles添加到fileds里面
+    def get_field_names(self, declared_fields, info):
+        names = super().get_field_names(declared_fields, info)
+        names.append('roles')
+        return names
 
     class Meta:
         model = Node
-        fields = ['name','ip', 'roles', 'status', 'comment','username','password']
+        # 过滤fields里只写数据
+        extra_kwargs = HostSerializer.Meta.extra_kwargs
+        # 过滤fields里只读数据
+        read_only_fields = ['id', 'status']
+        # 前端能展示的数据
+        fields = ['name', 'ip', 'status', 'comment', 'username', 'password']
 
 
 # class NodeSerializer(HostSerializer):
@@ -67,7 +78,6 @@ class RoleSerializer(GroupSerializer):
         model = Role
         fields = ["id", "name", "nodes", "children", "vars", "comment"]
         read_only_fields = ["id", "children", "vars"]
-
 
 
 class DeployReadExecutionSerializer(serializers.ModelSerializer):

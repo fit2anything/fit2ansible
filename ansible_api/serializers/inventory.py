@@ -48,6 +48,7 @@ class HostReadSerializer(ReadSerializerMixin, serializers.ModelSerializer):
         model = Host
         extra_kwargs = {
             'password': {'write_only': True},
+            'username':{'write_only':True},
             'private_key': {'write_only': True},
         }
         read_only_fields = ['id']
