@@ -24,26 +24,37 @@ class ClusterSerializer(ProjectSerializer):
         read_only_fields = ['id']
 
 
-class NodeSerializer(HostSerializer):
-    roles = serializers.SlugRelatedField(
-        many=True, read_only=False, queryset=Role.objects.all(),
-        slug_field='name', required=False,
-    )
+#节点序列化器
+class NodeSerializer(serializers.ModelSerializer):
+    #设置只写字段，返回数据的时候不显示
+    username = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True)
 
     class Meta:
         model = Node
-        extra_kwargs = HostSerializer.Meta.extra_kwargs
-        read_only_fields = list(filter(lambda x: x not in ('groups',), HostSerializer.Meta.read_only_fields))
-        fields = list(filter(lambda x: x not in ('groups',), HostSerializer.Meta.fields))
+        fields = ['name','ip', 'roles', 'status', 'comment','username','password']
 
-    def get_field_names(self, declared_fields, info):
-        names = super().get_field_names(declared_fields, info)
-        names.append('roles')
-        return names
 
-    def create(self, validated_data):
-        validated_data['groups'] = validated_data.pop('roles', [])
-        return super().create(validated_data)
+# class NodeSerializer(HostSerializer):
+#     roles = serializers.SlugRelatedField(
+#         many=True, read_only=False, queryset=Role.objects.all(),
+#         slug_field='name', required=False,
+#     )
+#
+#     class Meta:
+#         model = Node
+#         extra_kwargs = HostSerializer.Meta.extra_kwargs
+#         read_only_fields = list(filter(lambda x: x not in ('groups',), HostSerializer.Meta.read_only_fields))
+#         fields = list(filter(lambda x: x not in ('groups',), HostSerializer.Meta.fields))
+#
+#     def get_field_names(self, declared_fields, info):
+#         names = super().get_field_names(declared_fields, info)
+#         names.append('roles')
+#         return names
+#
+#     def create(self, validated_data):
+#         validated_data['groups'] = validated_data.pop('roles', [])
+#         return super().create(validated_data)
 
 
 class RoleSerializer(GroupSerializer):
@@ -56,6 +67,7 @@ class RoleSerializer(GroupSerializer):
         model = Role
         fields = ["id", "name", "nodes", "children", "vars", "comment"]
         read_only_fields = ["id", "children", "vars"]
+
 
 
 class DeployReadExecutionSerializer(serializers.ModelSerializer):

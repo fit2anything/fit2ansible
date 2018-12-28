@@ -22,12 +22,11 @@ class Cluster(Project):
 
 
 class Node(Host):
-    class Meta:
-        proxy = True
+    status = models.CharField(max_length=20,verbose_name=_('Status'),null=True,blank=True)
 
     @property
     def roles(self):
-        return self.groups
+        return self.groups.name
 
     @roles.setter
     def roles(self, value):

@@ -21,9 +21,12 @@ class ClusterViewSet(viewsets.ModelViewSet):
     lookup_url_kwarg = 'name'
 
 
+# 节点视图
 class NodeViewSet(ClusterResourceAPIMixin, viewsets.ModelViewSet):
     queryset = Node.objects.all()
     serializer_class = NodeSerializer
+    lookup_field = 'name'
+    lookup_url_kwarg = 'name'
 
 
 class RoleViewSet(ClusterResourceAPIMixin, viewsets.ModelViewSet):
