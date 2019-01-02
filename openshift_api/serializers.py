@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import serializers
 from django.shortcuts import reverse
 
@@ -24,31 +25,48 @@ class ClusterSerializer(ProjectSerializer):
         read_only_fields = ['id']
 
 
-# 节点序列化器
+#节点序列化器
 class NodeSerializer(HostSerializer):
-    roles = serializers.SlugRelatedField(many=True, read_only=True, queryset=Role.objects.all(),
+    roles = serializers.SlugRelatedField(many=True, queryset=Role.objects.all(),
                                          slug_field='name', required=False
                                          )
 
-    # 把roles添加到fileds里面
     def get_field_names(self, declared_fields, info):
         names = super().get_field_names(declared_fields, info)
         names.append('roles')
         return names
+
+    def update(self, instance, validated_data):
+        instance.groups.add(*(validated_data['roles']))
+        node_group_list = []
+        #根据机器所属角色给机器打标签
+        for item in validated_data['roles']:
+            if item.name == 'master':
+                node_group_list.append('node-config-master-infra')
+                instance.vars = {"openshift_node_group_name": node_group_list}
+            if item.name == 'node':
+                node_group_list.append('node-config-compute')
+                instance.vars = {"openshift_node_group_name": node_group_list}
+        instance.save()
+        return instance
+
+    def create(self, validated_data):
+        validated_data['groups'] = validated_data.pop('roles', [])
+        return super().create(validated_data)
 
     class Meta:
         model = Node
         # 过滤fields里只写数据
         extra_kwargs = HostSerializer.Meta.extra_kwargs
         # 过滤fields里只读数据
-        read_only_fields = ['id', 'status']
+        read_only_fields = ['status']
         # 前端能展示的数据
-        fields = ['name', 'ip', 'status', 'comment', 'username', 'password']
+        fields = ['id', 'name', 'ip', 'status', 'comment', 'username', 'password', 'vars']
 
 
 # class NodeSerializer(HostSerializer):
 #     roles = serializers.SlugRelatedField(
-#         many=True, read_only=False, queryset=Role.objects.all(),
+#         many=True, queryset=Role.objects.all(),
 #         slug_field='name', required=False,
 #     )
 #
@@ -63,6 +81,7 @@ class NodeSerializer(HostSerializer):
 #         names.append('roles')
 #         return names
 #
+#
 #     def create(self, validated_data):
 #         validated_data['groups'] = validated_data.pop('roles', [])
 #         return super().create(validated_data)
@@ -70,7 +89,7 @@ class NodeSerializer(HostSerializer):
 
 class RoleSerializer(GroupSerializer):
     nodes = serializers.SlugRelatedField(
-        many=True, read_only=False, queryset=Node.objects.all(),
+        many=True,  queryset=Node.objects.all(),
         slug_field='name', required=False
     )
 

@@ -7,4 +7,5 @@ from .models import Role
 
 @receiver(m2m_changed, sender=Group.hosts.through)
 def on_role_hosts_change(sender, action, instance, reverse, model, pk_set, **kwargs):
-    Role.update_node_group_labels()
+    # Role.update_node_group_labels()
+    pass

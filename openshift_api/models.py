@@ -93,8 +93,8 @@ class Role(Group):
         },
     ]
 
-    class Meta:
-        proxy = True
+    # class Meta:
+    #     proxy = True
 
     @property
     def nodes(self):
@@ -150,6 +150,7 @@ class Role(Group):
     def update_node_group_labels(cls):
         if Node.objects.all().count() == 1:
             Node.objects.first().add_vars({"openshift_node_group_name": cls.NODE_GROUP_ALL_IN_ONE})
+
             return
         infra_role = cls.infra()
         masters_role = cls.masters()
