@@ -12,8 +12,8 @@ from datetime import datetime
 
 
 class Cluster(Project):
-    status=models.CharField(max_length=20,verbose_name=_('Status'),null=True,blank=True)
-    offline=models.ForeignKey('Offline',on_delete=models.CASCADE,related_name='clusters',null=True,blank=True)
+    status = models.CharField(max_length=20, verbose_name=_('Status'), null=True, blank=True)
+    offline = models.ForeignKey('Offline', on_delete=models.CASCADE, related_name='clusters', null=True, blank=True)
     create_time = models.DateTimeField(default=datetime.now, verbose_name=_('Create time'))
 
     @property
@@ -22,7 +22,7 @@ class Cluster(Project):
 
 
 class Node(Host):
-    status = models.CharField(max_length=20,verbose_name=_('Status'),null=True,blank=True)
+    status = models.CharField(max_length=20, verbose_name=_('Status'), null=True, blank=True)
 
     @property
     def roles(self):
@@ -86,7 +86,8 @@ class Role(Group):
             "vars": {
                 "openshift_deployment_type": "origin",
                 "openshift_master_identity_providers": [
-                    {'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider'}
+                    {'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true',
+                     'kind': 'HTPasswdPasswordIdentityProvider'}
                 ],
                 "openshift_disable_check": "disk_availability,docker_storage,memory_availability,docker_image_availability"
             }
@@ -182,45 +183,20 @@ class DeployExecution(AbstractProjectResourceModel, AbstractExecutionModel):
         return result
 
 
-#离线包的model
+# 离线包的model
 class Offline(models.Model):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True)
-    name = models.CharField(max_length=20,unique=True,verbose_name=_('Name'))
-    path = models.FilePathField(max_length=1000,verbose_name=_('Path'))
-    remark = models.CharField(null=True,blank=True,max_length=256,verbose_name=_('Remark'))
-    is_active = models.BooleanField(default='1',verbose_name=_('Is Active'))
+    name = models.CharField(max_length=20, unique=True, verbose_name=_('Name'))
+    path = models.FilePathField(max_length=1000, verbose_name=_('Path'))
+    remark = models.CharField(null=True, blank=True, max_length=256, verbose_name=_('Remark'))
+    is_active = models.BooleanField(default='1', verbose_name=_('Is Active'))
     # content = JsonDictTextField(blank=True, null=True,verbose_name=_('Content'))
-    content_yml = models.TextField(blank=True, null=True,verbose_name=_('Content'))
-    create_time = models.DateTimeField(default=datetime.now,verbose_name=_('Create time'))
+    content_yml = models.TextField(blank=True, null=True, verbose_name=_('Content'))
+    create_time = models.DateTimeField(default=datetime.now, verbose_name=_('Create time'))
 
     def __str__(self):
         return self.name
 
-
     class Meta:
         verbose_name = '离线包'
         verbose_name_plural = verbose_name
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

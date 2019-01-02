@@ -19,6 +19,17 @@ class ClusterSerializer(ProjectSerializer):
     # offline = OfflineSerializer(many=False)
     create_time = serializers.DateTimeField(read_only=True)
 
+    def create(self, validated_data):
+        #每创建一个集群的时候，就在这个集群下创建mater和node角色，为后面节点分配角色所匹配
+        try:
+           instance = Cluster.objects.create(**validated_data)
+           Role.objects.create(name='master', project=instance)
+           Role.objects.create(name='node', project=instance)
+        except Exception as e:
+            print('e====', e)
+            raise e
+        return instance
+
     class Meta:
         model = Cluster
         fields = ['id', 'name', 'offline_name', 'status', 'create_time', 'offline']
@@ -31,22 +42,34 @@ class NodeSerializer(HostSerializer):
                                          slug_field='name', required=False
                                          )
 
+    offline = serializers.CharField(required=False)
+
     def get_field_names(self, declared_fields, info):
         names = super().get_field_names(declared_fields, info)
         names.append('roles')
         return names
 
     def update(self, instance, validated_data):
+        print("validated_data===", validated_data)
+        # print("validated_data_offline===", validated_data['offline'])
         instance.groups.add(*(validated_data['roles']))
-        node_group_list = []
+        node_group_label_list = []
         #根据机器所属角色给机器打标签
         for item in validated_data['roles']:
             if item.name == 'master':
-                node_group_list.append('node-config-master-infra')
-                instance.vars = {"openshift_node_group_name": node_group_list}
+                node_group_label_list.append('node-config-master-infra')
+                instance.vars = {"openshift_node_group_name": node_group_label_list}
             if item.name == 'node':
-                node_group_list.append('node-config-compute')
-                instance.vars = {"openshift_node_group_name": node_group_list}
+                node_group_label_list.append('node-config-compute')
+                instance.vars = {"openshift_node_group_name": node_group_label_list}
+        #读取配置文件
+        if 'offline' in validated_data.keys():
+            offline_name = validated_data['offline']
+            if Offline.objects.filter(name=offline_name):
+                path = Offline.objects.filter(name=offline_name)[0].path
+                print('path===', path)
+                #根据路径查找yaml文件
+
         instance.save()
         return instance
 
@@ -61,7 +84,7 @@ class NodeSerializer(HostSerializer):
         # 过滤fields里只读数据
         read_only_fields = ['status']
         # 前端能展示的数据
-        fields = ['id', 'name', 'ip', 'status', 'comment', 'username', 'password', 'vars']
+        fields = ['id', 'name', 'ip', 'status', 'comment', 'username', 'password', 'vars', "offline"]
 
 
 # class NodeSerializer(HostSerializer):
