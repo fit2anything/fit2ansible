@@ -1,4 +1,5 @@
-from django.db.models import Q
+import os
+
 from rest_framework import serializers
 from django.shortcuts import reverse
 
@@ -11,7 +12,7 @@ class OfflineSerializer(serializers.ModelSerializer):
     class Meta:
         model = Offline
         fields = [
-            'name', 'path', 'remark', 'is_active', 'content_yml'
+            'id', 'name', 'path', 'remark', 'is_active', 'content_yml'
         ]
 
 
@@ -42,7 +43,7 @@ class NodeSerializer(HostSerializer):
                                          slug_field='name', required=False
                                          )
 
-    offline = serializers.CharField(required=False)
+    # offline = serializers.CharField(required=False)
 
     def get_field_names(self, declared_fields, info):
         names = super().get_field_names(declared_fields, info)
@@ -62,13 +63,20 @@ class NodeSerializer(HostSerializer):
             if item.name == 'node':
                 node_group_label_list.append('node-config-compute')
                 instance.vars = {"openshift_node_group_name": node_group_label_list}
-        #读取配置文件
-        if 'offline' in validated_data.keys():
-            offline_name = validated_data['offline']
-            if Offline.objects.filter(name=offline_name):
-                path = Offline.objects.filter(name=offline_name)[0].path
-                print('path===', path)
-                #根据路径查找yaml文件
+
+        # #读取配置文件
+        # if 'offline' in validated_data.keys():
+        #     offline_id = validated_data['offline']
+        #     if Offline.objects.filter(id=offline_id):
+        #         path = Offline.objects.filter(id=offline_id)[0].path
+        #         print('path===', path)
+        #         #根据路径查找yaml文件
+        #         for root, dirs, files in os.walk(path):
+        #             print("files=====", files)
+        #             with open(path+"/"+files, 'r') as f:
+        #                 data_yaml = f.read()
+        #                 print("data====",data_yaml)
+
 
         instance.save()
         return instance
@@ -84,7 +92,7 @@ class NodeSerializer(HostSerializer):
         # 过滤fields里只读数据
         read_only_fields = ['status']
         # 前端能展示的数据
-        fields = ['id', 'name', 'ip', 'status', 'comment', 'username', 'password', 'vars', "offline"]
+        fields = ['id', 'name', 'ip', 'status', 'comment', 'username', 'password', 'vars']
 
 
 # class NodeSerializer(HostSerializer):
