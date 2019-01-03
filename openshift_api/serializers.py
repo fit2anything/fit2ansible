@@ -19,6 +19,7 @@ class OfflineSerializer(serializers.ModelSerializer):
 class ClusterSerializer(ProjectSerializer):
     # offline = OfflineSerializer(many=False)
     create_time = serializers.DateTimeField(read_only=True)
+    offline_id = serializers.UUIDField(required=False)
 
     def create(self, validated_data):
         #每创建一个集群的时候，就在这个集群下创建mater和node角色，为后面节点分配角色所匹配
@@ -31,9 +32,14 @@ class ClusterSerializer(ProjectSerializer):
             raise e
         return instance
 
+    def update(self, instance, validated_data):
+        instance.offline_id = validated_data['offline_id']
+        instance.save()
+        return instance
+
     class Meta:
         model = Cluster
-        fields = ['id', 'name', 'offline_name', 'status', 'create_time', 'offline']
+        fields = ['id', 'name', 'offline_name', 'status', 'create_time', 'offline', 'offline_id']
         read_only_fields = ['id']
 
 
@@ -49,6 +55,7 @@ class NodeSerializer(HostSerializer):
         return names
 
     def update(self, instance, validated_data):
+
         if 'roles' in validated_data.keys():
             old_roles_list = Role.objects.filter(hosts=instance)
             for old_role in old_roles_list:
@@ -56,14 +63,19 @@ class NodeSerializer(HostSerializer):
 
             instance.groups.add(*(validated_data['roles']))
             node_group_label_list = []
-            #根据机器所属角色给机器打标签
-            for item in validated_data['roles']:
-                if item.name == 'master':
-                    node_group_label_list.append('node-config-master-infra')
-                    instance.vars = {"openshift_node_group_name": node_group_label_list}
-                if item.name == 'node':
-                    node_group_label_list.append('node-config-compute')
-                    instance.vars = {"openshift_node_group_name": node_group_label_list}
+
+            if validated_data['roles'] == []:
+                instance.vars = {}
+            else:
+                #根据机器所属角色给机器打标签
+                for item in validated_data['roles']:
+                    if item.name == 'master':
+                        node_group_label_list.append('node-config-master-infra')
+                        instance.vars = {"openshift_node_group_name": node_group_label_list}
+                    if item.name == 'node':
+                        node_group_label_list.append('node-config-compute')
+                        instance.vars = {"openshift_node_group_name": node_group_label_list}
+
 
         instance.save()
         return instance
@@ -77,7 +89,7 @@ class NodeSerializer(HostSerializer):
         # 过滤fields里只写数据
         extra_kwargs = HostSerializer.Meta.extra_kwargs
         # 过滤fields里只读数据
-        read_only_fields = ['id','status']
+        read_only_fields = ['status']
         # 前端能展示的数据
         fields = ['id', 'name', 'ip', 'status', 'comment', 'username', 'password', 'vars']
 
