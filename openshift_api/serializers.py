@@ -43,40 +43,27 @@ class NodeSerializer(HostSerializer):
                                          slug_field='name', required=False
                                          )
 
-    # offline = serializers.CharField(required=False)
-
     def get_field_names(self, declared_fields, info):
         names = super().get_field_names(declared_fields, info)
         names.append('roles')
         return names
 
     def update(self, instance, validated_data):
-        print("validated_data===", validated_data)
-        # print("validated_data_offline===", validated_data['offline'])
-        instance.groups.add(*(validated_data['roles']))
-        node_group_label_list = []
-        #根据机器所属角色给机器打标签
-        for item in validated_data['roles']:
-            if item.name == 'master':
-                node_group_label_list.append('node-config-master-infra')
-                instance.vars = {"openshift_node_group_name": node_group_label_list}
-            if item.name == 'node':
-                node_group_label_list.append('node-config-compute')
-                instance.vars = {"openshift_node_group_name": node_group_label_list}
+        if 'roles' in validated_data.keys():
+            old_roles_list = Role.objects.filter(hosts=instance)
+            for old_role in old_roles_list:
+                instance.groups.remove(old_role)
 
-        # #读取配置文件
-        # if 'offline' in validated_data.keys():
-        #     offline_id = validated_data['offline']
-        #     if Offline.objects.filter(id=offline_id):
-        #         path = Offline.objects.filter(id=offline_id)[0].path
-        #         print('path===', path)
-        #         #根据路径查找yaml文件
-        #         for root, dirs, files in os.walk(path):
-        #             print("files=====", files)
-        #             with open(path+"/"+files, 'r') as f:
-        #                 data_yaml = f.read()
-        #                 print("data====",data_yaml)
-
+            instance.groups.add(*(validated_data['roles']))
+            node_group_label_list = []
+            #根据机器所属角色给机器打标签
+            for item in validated_data['roles']:
+                if item.name == 'master':
+                    node_group_label_list.append('node-config-master-infra')
+                    instance.vars = {"openshift_node_group_name": node_group_label_list}
+                if item.name == 'node':
+                    node_group_label_list.append('node-config-compute')
+                    instance.vars = {"openshift_node_group_name": node_group_label_list}
 
         instance.save()
         return instance
@@ -90,7 +77,7 @@ class NodeSerializer(HostSerializer):
         # 过滤fields里只写数据
         extra_kwargs = HostSerializer.Meta.extra_kwargs
         # 过滤fields里只读数据
-        read_only_fields = ['status']
+        read_only_fields = ['id','status']
         # 前端能展示的数据
         fields = ['id', 'name', 'ip', 'status', 'comment', 'username', 'password', 'vars']
 

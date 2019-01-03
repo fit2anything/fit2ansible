@@ -167,6 +167,9 @@ class Role(Group):
         for node in Node.objects.filter(groups=infra_role):
             node.add_vars({"openshift_node_group_name": cls.NODE_GROUP_INFRA})
 
+    def __str__(self):
+        return "%s %s" % (self.project, self.name)
+
 
 class DeployExecution(AbstractProjectResourceModel, AbstractExecutionModel):
     project = models.ForeignKey('Cluster', on_delete=models.CASCADE)
