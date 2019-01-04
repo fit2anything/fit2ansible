@@ -1,9 +1,0 @@
-house:
-  family:
-    name: jason
-    parents:
-      - aaa
-      - bbb
-  address:
-    number: 18
-    street: Main Street

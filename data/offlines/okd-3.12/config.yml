@@ -1,9 +1,0 @@
-house:
-  family:
-    name: Bule
-    parents:
-      - eee
-      - fff
-  address:
-    number: 34
-    street: Main Street
