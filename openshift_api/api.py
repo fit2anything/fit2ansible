@@ -50,7 +50,7 @@ class DeployExecutionViewSet(ClusterResourceAPIMixin, viewsets.ModelViewSet):
 
 
 # 离线包视图
-class OfflineViewSet(viewsets.ModelViewSet):
+class OfflinePackageViewSet(viewsets.ModelViewSet):
     queryset = Offline.objects.all()
     serializer_class = OfflineSerializer
     http_method_names = ['get', 'head', 'options']

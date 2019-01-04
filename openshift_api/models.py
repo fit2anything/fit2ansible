@@ -173,6 +173,7 @@ class Role(Group):
 
 class DeployExecution(AbstractProjectResourceModel, AbstractExecutionModel):
     project = models.ForeignKey('Cluster', on_delete=models.CASCADE)
+    offline_pkg = models.ForeignKey('Offline', on_delete=models.CASCADE)
 
     def start(self):
         result = {"raw": {}, "summary": {}}

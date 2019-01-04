@@ -137,7 +137,7 @@ class DeployReadExecutionSerializer(serializers.ModelSerializer):
     class Meta:
         model = DeployExecution
         fields = [
-            'id', 'state', 'num', 'result_summary', 'result_raw',
+            'id', 'offline_pkg', 'state', 'num', 'result_summary', 'result_raw',
             'date_created', 'date_start', 'date_end',
         ]
         read_only_fields = [
