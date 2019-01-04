@@ -172,6 +172,9 @@ class Inventory:
         return LocalModelInventory(self)
 
     def get_data_yaml(self):
+        return self.get_data(fmt='yaml')
+
+    def get_data(self, fmt='py'):
         data = {}
         group_all_hosts = {}
         group_all_data = {'hosts': group_all_hosts}
@@ -181,14 +184,20 @@ class Inventory:
             group_all_hosts[host.name] = host.ansible_vars
 
         for group in self.groups:
-            children = {child: '' for child in group.children_names}
-            hosts = {host: '' for host in group.hosts_names}
-            group_data = {"vars": group.vars, "children": children, "hosts": hosts}
+            group_data = {}
+            children = {child: {} for child in group.children_names}
+            hosts = {host: {} for host in group.hosts_names}
+            if group.vars:
+                group_data["vars"] = group.vars
+            if children:
+                group_data['children'] = children
+            if hosts:
+                group['hosts'] = hosts
             data[group.name] = group_data
-        return yaml.safe_dump(data, default_flow_style=False)
 
-    def get_data(self, fmt='yaml'):
-        if fmt in ['yaml', 'yaml']:
-            return self.get_data_yaml()
+        if fmt in ['py']:
+            return data
+        elif fmt in ['yaml', 'yaml']:
+            return yaml.safe_dump(data, default_flow_style=False)
         else:
             return None
