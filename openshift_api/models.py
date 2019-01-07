@@ -77,6 +77,18 @@ class Cluster(Project):
             except Role.DoesNotExist:
                 pass
 
+    def create_node_localhost(self):
+        Node.objects.create(
+            name="localhost", vars={"ansible_connection": "local"},
+            project=self, meta={"hidden": True}
+        )
+
+    def create_playbook(self):
+        Playbook.objects.create(
+            name='deploy',
+        )
+        pass
+
 
 class Node(Host):
     class Meta:
@@ -104,15 +116,8 @@ class Node(Host):
             self.vars = __vars
             self.save()
 
-    @classmethod
-    def create_localhost(cls):
-        cls.objects.create(name="localhost", vars={"ansible_connection": "local"})
-
     def get_var(self, key, default):
         return self.vars.get(key, default)
-
-    def get_node_group_label(self):
-        return self.get_var("openshift_node_group_name", "-").split('-')[-1]
 
 
 class Role(Group):
@@ -133,7 +138,7 @@ class Role(Group):
 
 class DeployExecution(AbstractProjectResourceModel, AbstractExecutionModel):
     project = models.ForeignKey('Cluster', on_delete=models.CASCADE)
-    package = models.ForeignKey('Package', on_delete=models.CASCADE)
+    playbook = models.ForeignKey(Playbook, related_name='executions', on_delete=models.SET_NULL, null=True)
 
     def start(self):
         result = {"raw": {}, "summary": {}}

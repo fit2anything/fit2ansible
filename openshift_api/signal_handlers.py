@@ -8,6 +8,7 @@ from .models import Role, Package, Cluster
 def on_cluster_save(sender, instance=None, **kwargs):
     if instance and instance.template:
         instance.create_roles()
+        instance.create_node_localhost()
 
 
 def auto_lookup_packages():

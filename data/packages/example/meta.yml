@@ -1,5 +1,7 @@
 name: example
 version: 3.11
+install_playbook: deploy.yml
+upgrade_playbook: upgrade.yml
 configs:
   - name: openshift_master_cluster_hostname
     alias: 域名
