@@ -175,15 +175,15 @@ class Playbook(AbstractProjectResourceModel):
     def __str__(self):
         return '{}-{}'.format(self.project, self.name)
 
-    @property
-    def playbook_dir(self):
+    def playbook_dir(self, auto_create=True):
         path = os.path.join(self.project.playbooks_dir, str(self.name))
-        os.makedirs(path, exist_ok=True)
+        if not os.path.isdir(path) and auto_create:
+            os.makedirs(path, exist_ok=True)
         return path
 
     @property
     def playbook_path(self):
-        path = os.path.join(self.playbook_dir, self.alias)
+        path = os.path.join(self.playbook_dir(), self.alias)
         return path
 
     @property
@@ -202,16 +202,16 @@ class Playbook(AbstractProjectResourceModel):
             success, error = False, 'Not repo get'
             return success, error
         try:
-            if os.path.isdir(os.path.join(self.playbook_dir, '.git')):
+            if os.path.isdir(os.path.join(self.playbook_dir(), '.git')):
                 if self.update_policy == self.UPDATE_POLICY_ALWAYS:
                     print("Update playbook from: {}".format(self.git.get('repo')))
-                    repo = git.Repo(self.playbook_dir)
+                    repo = git.Repo(self.playbook_dir())
                     remote = repo.remote()
                     remote.pull()
             else:
                 print("Install playbook from: {}".format(self.git.get('repo')))
                 git.Repo.clone_from(
-                    self.git['repo'], self.playbook_dir,
+                    self.git['repo'], self.playbook_dir(),
                     branch=self.git.get('branch'), depth=1,
                 )
         except Exception as e:
@@ -219,10 +219,10 @@ class Playbook(AbstractProjectResourceModel):
         return success, error
 
     def install_from_http(self):
-        if os.listdir(self.playbook_dir):
-            os.removedirs(self.playbook_dir)
+        if os.listdir(self.playbook_dir()):
+            os.removedirs(self.playbook_dir())
         r = requests.get(self.url)
-        tmp_file_path = os.path.join(self.playbook_dir, 'tmp')
+        tmp_file_path = os.path.join(self.playbook_dir(), 'tmp')
         with open(tmp_file_path, 'wb') as f:
             f.write(r.content)
         # TODO: compress it
@@ -237,17 +237,18 @@ class Playbook(AbstractProjectResourceModel):
         return True, None
 
     def install_from_local(self):
+        playbook_dir = self.playbook_dir(auto_create=False)
         if self.update_policy == self.UPDATE_POLICY_NEVER:
             return True, None
-        if os.path.isdir(self.playbook_dir) and \
+        if os.path.isfile(self.playbook_path) and \
                 self.update_policy == self.UPDATE_POLICY_IF_NOT_PRESENT:
             return True, None
-        shutil.rmtree(self.playbook_dir, ignore_errors=True)
+        shutil.rmtree(playbook_dir, ignore_errors=True)
         url = self.url
         if self.url.startswith('file://'):
             url = self.url.replace('file://', '')
         try:
-            shutil.copy(url, self.playbook_dir)
+            shutil.copytree(url, playbook_dir)
         except Exception as e:
             return False, e
         return True, None
@@ -257,6 +258,8 @@ class Playbook(AbstractProjectResourceModel):
             return self.install_from_plays()
         elif self.type == self.TYPE_GIT:
             return self.install_from_git()
+        elif self.type == self.TYPE_LOCAL:
+            return self.install_from_local()
         else:
             return False, 'Not support {}'.format(self.type)
 
@@ -297,7 +300,7 @@ class Playbook(AbstractProjectResourceModel):
 
     def cleanup(self):
         self.remove_period_task()
-        shutil.rmtree(self.playbook_dir, ignore_errors=True)
+        shutil.rmtree(self.playbook_dir(), ignore_errors=True)
 
 
 class PlaybookExecution(AbstractProjectResourceModel, AbstractExecutionModel):
@@ -317,7 +320,7 @@ class PlaybookExecution(AbstractProjectResourceModel, AbstractExecutionModel):
             result["summary"] = {"error": str(err)}
             post_execution_start.send(self.__class__, execution=self, result=result)
             return result
-        os.chdir(self.playbook.playbook_dir)
+        os.chdir(self.playbook.playbook_dir())
         try:
             runner = PlayBookRunner(
                 self.project.inventory_obj,
