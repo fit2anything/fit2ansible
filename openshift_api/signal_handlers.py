@@ -11,7 +11,10 @@ def on_cluster_save(sender, instance=None, **kwargs):
 
 
 def auto_lookup_packages():
-    Package.lookup()
+    try:
+        Package.lookup()
+    except:
+        pass
 
 
 auto_lookup_packages()
