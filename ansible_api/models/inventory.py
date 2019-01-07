@@ -192,7 +192,7 @@ class Inventory:
             if children:
                 group_data['children'] = children
             if hosts:
-                group['hosts'] = hosts
+                group_data['hosts'] = hosts
             data[group.name] = group_data
 
         if fmt in ['py']:
