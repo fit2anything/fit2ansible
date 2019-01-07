@@ -242,9 +242,7 @@ class Playbook(AbstractProjectResourceModel):
             return False, 'Not support {}'.format(self.type)
 
     def execute(self):
-        pk = None
-        if current_task:
-            pk = current_task.request.id
+        pk = current_task.request.id if current_task else None
         execution = PlaybookExecution(playbook=self, pk=pk)
         execution.save()
         result = execution.start()

@@ -1,11 +1,17 @@
-from django.db.models.signals import m2m_changed
+from django.db.models.signals import m2m_changed, post_save
 from django.dispatch import receiver
 
-from ansible_api.models import Group
-from .models import Role
+from .models import Role, Package, Cluster
 
 
-@receiver(m2m_changed, sender=Group.hosts.through)
-def on_role_hosts_change(sender, action, instance, reverse, model, pk_set, **kwargs):
-    # Role.update_node_group_labels()
-    pass
+@receiver(post_save, sender=Cluster)
+def on_cluster_save(sender, instance=None, **kwargs):
+    if instance and instance.template:
+        instance.create_roles()
+
+
+def auto_lookup_packages():
+    Package.lookup()
+
+
+auto_lookup_packages()
