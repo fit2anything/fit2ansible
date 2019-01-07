@@ -17,7 +17,6 @@ import datetime
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ANSIBLE_PROJECTS_DIR = os.path.join(BASE_DIR, 'data', 'ansible', 'projects')
 #添加离线包路径
-OFFLINES_DIR= os.path.join(BASE_DIR,'data','offlines')
 
 
 # Quick-start development settings - unsuitable for production
@@ -193,6 +192,7 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
     ),
     'ORDERING_PARAM': "order",

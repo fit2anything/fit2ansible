@@ -13,9 +13,7 @@ def set_current_project(p):
     from .models import Project
     if isinstance(p, str):
         p = Project.objects.get(name=p)
-        print('p====',p)
     setattr(_thread_locals, 'current_project', p)
-    print("setattr(_thread_locals, 'current_project', p)===",setattr(_thread_locals, 'current_project', p))
 
 
 def change_to_root():

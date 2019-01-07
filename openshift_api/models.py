@@ -11,8 +11,7 @@ from ansible_api.models import Project, Host, Group, Playbook
 from ansible_api.models.mixins import (
     AbstractProjectResourceModel, AbstractExecutionModel
 )
-from ansible_api.ctx import set_current_project
-from ansible_api.signals import pre_execution_start, post_execution_start
+from .signals import pre_deploy_execution_start, post_deploy_execution_start
 
 
 __all__ = ['Package', 'Cluster', 'Node', 'Role', 'DeployExecution']
@@ -33,6 +32,10 @@ class Package(models.Model):
     class Meta:
         verbose_name = _('Package')
 
+    @property
+    def path(self):
+        return os.path.join(self.packages_dir, self.name)
+
     @classmethod
     def lookup(cls):
         for d in os.listdir(cls.packages_dir):
@@ -51,7 +54,6 @@ class Cluster(Project):
     template = models.CharField(max_length=64, blank=True, default='')
 
     def create_roles(self):
-        set_current_project(self)
         _roles = {}
         for role in self.package.meta.get('roles', []):
             _roles[role['name']] = role
@@ -83,11 +85,22 @@ class Cluster(Project):
             project=self, meta={"hidden": True}
         )
 
-    def create_playbook(self):
-        Playbook.objects.create(
-            name='deploy',
-        )
-        pass
+    def create_install_playbooks(self):
+        for data in self.package.meta.get('install_playbooks', []):
+            url = 'file:///{}'.format(os.path.join(self.package.path))
+            Playbook.objects.create(
+                name=data['name'], alias=data['alias'],
+                type=Playbook.TYPE_LOCAL, url=url, project=self,
+            )
+
+    def create_playbooks(self):
+        self.create_install_playbooks()
+
+    def on_cluster_create(self):
+        self.change_to()
+        self.create_roles()
+        self.create_node_localhost()
+        self.create_install_playbooks()
 
 
 class Node(Host):
@@ -137,18 +150,18 @@ class Role(Group):
 
 
 class DeployExecution(AbstractProjectResourceModel, AbstractExecutionModel):
-    project = models.ForeignKey('Cluster', on_delete=models.CASCADE)
-    playbook = models.ForeignKey(Playbook, related_name='executions', on_delete=models.SET_NULL, null=True)
+    project = models.ForeignKey('ansible_api.Project', on_delete=models.CASCADE)
 
     def start(self):
         result = {"raw": {}, "summary": {}}
-        pre_execution_start.send(self.__class__, execution=self)
-        for playbook in self.project.playbook_set.all():
+        pre_deploy_execution_start.send(self.__class__, execution=self)
+        for playbook in self.project.playbook_set.all().order_by('name'):
+            print("\n>>> Start run {} ".format(playbook.name))
             _result = playbook.execute()
             result["summary"].update(_result["summary"])
             if not _result.get('summary', {}).get('success', False):
                 break
-        post_execution_start.send(self.__class__, execution=self, result=result)
+        post_deploy_execution_start.send(self.__class__, execution=self, result=result)
         return result
 
 

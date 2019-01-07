@@ -29,8 +29,8 @@ class RoleViewSet(ClusterResourceAPIMixin, viewsets.ModelViewSet):
 
 class DeployExecutionViewSet(ClusterResourceAPIMixin, viewsets.ModelViewSet):
     queryset = DeployExecution.objects.all()
-    serializer_class = serializers.DeployReadExecutionSerializer
-    read_serializer_class = serializers.DeployReadExecutionSerializer
+    serializer_class = serializers.DeployExecutionSerializer
+    read_serializer_class = serializers.DeployExecutionSerializer
 
     http_method_names = ['post', 'get', 'head', 'options']
 

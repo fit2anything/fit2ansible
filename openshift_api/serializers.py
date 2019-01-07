@@ -7,7 +7,7 @@ from .models import Cluster, Node, Role, DeployExecution, Package
 
 __all__ = [
     'PackageSerializer', 'ClusterSerializer', 'NodeSerializer',
-    'RoleSerializer', 'DeployReadExecutionSerializer',
+    'RoleSerializer', 'DeployExecutionSerializer',
 ]
 
 
@@ -58,29 +58,6 @@ class NodeSerializer(HostSerializer):
         read_only_fields = ['id']
 
 
-# class NodeSerializer(HostSerializer):
-#     roles = serializers.SlugRelatedField(
-#         many=True, queryset=Role.objects.all(),
-#         slug_field='name', required=False,
-#     )
-#
-#     class Meta:
-#         model = Node
-#         extra_kwargs = HostSerializer.Meta.extra_kwargs
-#         read_only_fields = list(filter(lambda x: x not in ('groups',), HostSerializer.Meta.read_only_fields))
-#         fields = list(filter(lambda x: x not in ('groups',), HostSerializer.Meta.fields))
-#
-#     def get_field_names(self, declared_fields, info):
-#         names = super().get_field_names(declared_fields, info)
-#         names.append('roles')
-#         return names
-#
-#
-#     def create(self, validated_data):
-#         validated_data['groups'] = validated_data.pop('roles', [])
-#         return super().create(validated_data)
-
-
 class RoleSerializer(GroupSerializer):
     nodes = serializers.SlugRelatedField(
         many=True,  queryset=Node.objects.all(),
@@ -94,7 +71,7 @@ class RoleSerializer(GroupSerializer):
         read_only_fields = ['id']
 
 
-class DeployReadExecutionSerializer(serializers.ModelSerializer):
+class DeployExecutionSerializer(serializers.ModelSerializer):
     result_summary = serializers.JSONField(read_only=True)
     log_url = serializers.SerializerMethodField()
     log_ws_url = serializers.SerializerMethodField()
@@ -104,7 +81,7 @@ class DeployReadExecutionSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = [
             'id', 'state', 'num', 'result_summary', 'result_raw',
-            'date_created', 'date_start', 'date_end'
+            'date_created', 'date_start', 'date_end', 'project', 'timedelta'
         ]
 
     @staticmethod
