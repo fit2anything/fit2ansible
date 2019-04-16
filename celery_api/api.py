@@ -17,7 +17,10 @@ class TaskResultApi(generics.RetrieveAPIView):
 
     def get_object(self):
         task_id = self.kwargs.get('pk')
-        return AsyncResult(str(task_id))
+        task = AsyncResult(str(task_id))
+        if not task:
+            task = {'result': '', 'state': 'Pending'}
+        return task
 
 
 class TaskLogApi(LogTailApi):

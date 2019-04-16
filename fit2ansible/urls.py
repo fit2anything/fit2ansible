@@ -17,9 +17,7 @@ schema_view = get_schema_view(
       contact=openapi.Contact(email="ibuler@fit2cloud.com"),
       license=openapi.License(name="GPLv2"),
    ),
-   # validators=['flex', 'ssv'],
    public=True,
-   # permission_classes=(permissions.AllowAny,),
 )
 
 
