@@ -12,10 +12,11 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 
 import os
 import datetime
-
+from .conf import load_user_config
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ANSIBLE_PROJECTS_DIR = os.path.join(BASE_DIR, 'data', 'ansible', 'projects')
+CONFIG = load_user_config()
 #添加离线包路径
 
 
@@ -84,11 +85,12 @@ ASGI_APPLICATION = 'fit2ansible.routing.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'data', 'db.sqlite3'),
-        'OPTIONS': {
-            'timeout': 20
-        }
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': CONFIG.DB_NAME,
+        'USER': CONFIG.DB_USER,
+        'PASSWORD': CONFIG.DB_PASSWORD,
+        'HOST': CONFIG.DB_HOST,
+        'PORT': CONFIG.DB_PORT,
     }
 }
 
@@ -132,10 +134,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "data", "static")
 
-REDIS_HOST = "localhost"
-REDIS_PORT = 6379
+REDIS_HOST = CONFIG.REDIS_HOST
+REDIS_PORT = CONFIG.REDIS_PORT
+REDIS_PASSWORD = CONFIG.REDIS_PASSWORD
 
-REDIS_PASSWORD = ""
 LOGIN_URL = '/admin/login'
 
 
