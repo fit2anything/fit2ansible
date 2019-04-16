@@ -17,9 +17,6 @@ db.sqlite3
 celerybeat.pid
 tmp
 dump.rdb
-data/celery/
-data/ansible/
-data/projects/
-data/openshift-ansible/
 sqlite3.db
 build_to_registry.sh
+data/*
