@@ -22,3 +22,4 @@ data/ansible/
 data/projects/
 data/openshift-ansible/
 sqlite3.db
+build_to_registry.sh
