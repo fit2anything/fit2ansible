@@ -2,7 +2,7 @@
 #
 
 args=$1
-image=registry.fit2cloud.com/fit2anything/fit2openshift
+image=registry.fit2cloud.com/fit2anything/fit2ansible:latest
 
 function build(){
    docker build -t ${image} .
