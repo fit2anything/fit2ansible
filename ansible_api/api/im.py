@@ -5,11 +5,13 @@
 Immediately run adhoc and playbook
 """
 
+import tempfile
 from rest_framework import permissions, generics
 from rest_framework.response import Response
 
+from ..models import Play
 from ..serializers import IMPlaybookSerializer, IMAdHocSerializer
-from ..tasks import execute_playbook, run_im_adhoc
+from ..tasks import run_im_adhoc, run_im_playbook
 
 __all__ = ['IMPlaybookApi', 'IMAdHocApi']
 
@@ -21,8 +23,15 @@ class IMPlaybookApi(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            playbook = serializer.save()
-            task = execute_playbook.delay(playbook.id, save_history=False)
+            plays_data = serializer.validated_data['plays']
+            inventory_data = serializer.validated_data.get('inventory')
+            plays = [Play(**p) for p in plays_data]
+            plays_yaml = Play.get_plays_data(plays, fmt='yaml')
+            f = tempfile.NamedTemporaryFile(mode='wt', delete=False, suffix='.yml')
+            f.write(plays_yaml)
+            print(f.name)
+            task = run_im_playbook.delay(f.name, inventory_data)
+            # return Response({'ok': 1})
             return Response({'task': task.id})
         else:
             return Response({"error": serializer.errors})

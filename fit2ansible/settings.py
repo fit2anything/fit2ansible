@@ -15,11 +15,11 @@ import datetime
 from .conf import load_user_config
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_LOG_DIR = os.path.join(BASE_DIR, "data", "log")
 ANSIBLE_PROJECTS_DIR = os.path.join(BASE_DIR, 'data', 'ansible', 'projects')
 CONFIG = load_user_config()
-#添加离线包路径
 
-
+os.makedirs(BASE_LOG_DIR, exist_ok=True)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
@@ -33,7 +33,6 @@ ALLOWED_HOSTS = []
 
 # Application definition
 INSTALLED_APPS = [
-    'openshift_api.apps.OpenshiftApiConfig',
     'ansible_api.apps.AnsibleApiConfig',
     'celery_api.apps.CeleryApiConfig',
     'users.apps.UsersConfig',
@@ -85,7 +84,7 @@ ASGI_APPLICATION = 'fit2ansible.routing.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.{}'.format(CONFIG.DB_ENGINE),
         'NAME': CONFIG.DB_NAME,
         'USER': CONFIG.DB_USER,
         'PASSWORD': CONFIG.DB_PASSWORD,
@@ -152,11 +151,6 @@ CACHES = {
     },
 }
 
-CELERY_LOG_BROKER_URL = 'redis://:%(password)s@%(host)s:%(port)s/6' % {
-    'password': REDIS_PASSWORD,
-    'host': REDIS_HOST,
-    'port': REDIS_PORT,
-}
 
 # Dump all celery log to here
 CELERY_LOG_DIR = os.path.join(BASE_DIR, 'data', 'celery')
@@ -194,33 +188,100 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        # 'rest_framework.authentication.SessionAuthentication',
         'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
     'ORDERING_PARAM': "order",
     'SEARCH_PARAM': "search",
     'DATETIME_FORMAT': '%Y-%m-%d %H:%M:%S %z',
     'DATETIME_INPUT_FORMATS': ['%Y-%m-%d %H:%M:%S %z'],
-    # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    # 'PAGE_SIZE': 25
 }
 
 SWAGGER_SETTINGS = {
     'DEFAULT_AUTO_SCHEMA_CLASS': 'fit2ansible.swagger.CustomSwaggerAutoSchema',
 }
 
+CHANNEL_REDIS = "redis://:{}@{}:{}/0".format(
+    CONFIG.REDIS_PASSWORD, CONFIG.REDIS_HOST, CONFIG.REDIS_PORT
+)
 
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
+            "hosts": [CHANNEL_REDIS],
         },
     },
 }
 
 JWT_AUTH = {
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=3600),
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(hours=12),
     'JWT_AUTH_HEADER_PREFIX': 'JWT',
     'JWT_RESPONSE_PAYLOAD_HANDLER': 'users.utils.jwt_response_payload_handler',
+}
+
+SESSION_ENGINE = 'redis_sessions.session'
+SESSION_REDIS = {
+    'host': CONFIG.REDIS_HOST,
+    'port': CONFIG.REDIS_PORT,
+    'password': CONFIG.REDIS_PASSWORD,
+    'db': CONFIG.REDIS_DB_SESSION,
+    'prefix': 'auth_session',
+    'socket_timeout': 1,
+    'retry_on_timeout': False
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'main': {
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+            'format': '%(asctime)s [%(module)s %(levelname)s] %(message)s',
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+        'msg': {
+            'format': '%(message)s'
+        }
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',  #
+            'formatter': 'main'
+        },
+        # 默认的
+        'default': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
+            'filename': os.path.join(BASE_LOG_DIR, "info.log"),  # 日志文件
+            'maxBytes': 1024 * 1024 * 50,  #日志大小 50M
+            'backupCount': 7,  # 最多备份几个
+            'formatter': 'main',
+            'encoding': 'utf-8',
+        },
+        # 专门用来记错误日志
+        'error': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件，自动切
+            'filename': os.path.join(BASE_LOG_DIR, "error.log"),  # 日志文件
+            'maxBytes': 1024 * 1024 * 50,  # 日志大小 50M
+            'backupCount': 5,
+            'formatter': 'main',
+            'encoding': 'utf-8',
+        },
+    },
+    'loggers': {
+        # 默认的logger应用如下配置
+        '': {
+            'handlers': ['default', 'console', 'error'],
+            'level': 'DEBUG',
+            'propagate': True,  # 向不向更高级别的logger传递
+        },
+    },
 }

@@ -45,7 +45,7 @@ class PlaybookQuerySet(models.QuerySet):
 
 class Play(AbstractProjectResourceModel):
     name = models.CharField(max_length=128, verbose_name=_('Name'), blank=True, null=True)
-    pattern = models.CharField(max_length=1024, default='all', verbose_name=_('Pattern'))
+    hosts = models.CharField(max_length=1024, default='all', verbose_name=_('Hosts'))
     gather_facts = models.BooleanField(default=False)
     vars = common_models.JsonDictTextField(verbose_name=_('Vars'), blank=True, null=True)
     tasks = common_models.JsonListTextField(verbose_name=_('Tasks'), blank=True, null=True)
@@ -62,7 +62,7 @@ class Play(AbstractProjectResourceModel):
 
     def get_play_data(self, fmt='py'):
         data = {
-            'hosts': self.pattern,
+            'hosts': self.hosts,
             'gather_facts': self.gather_facts,
             'vars': self.vars or [],
             'tasks': self.tasks or [],

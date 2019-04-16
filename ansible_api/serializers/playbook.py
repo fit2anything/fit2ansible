@@ -22,7 +22,7 @@ class PlayReadSerializer(ReadSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Play
         read_only_fields = ['id']
-        fields = ['id', 'name', 'pattern', 'vars', 'tasks', 'roles', 'project']
+        fields = ['id', 'name', 'hosts', 'vars', 'tasks', 'roles', 'project']
 
     def validate(self, data):
         if not data.get("tasks") and not data.get('roles'):

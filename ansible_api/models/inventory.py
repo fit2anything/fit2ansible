@@ -101,13 +101,7 @@ class Host(AbstractProjectResourceModel, BaseHost):
 
 
 class BaseGroup(models.Model):
-    GROUP_NAME = (
-        ('master', 'master'),
-        ('node', 'node'),
-        ('etcd', 'etcd'),
-
-    )
-    name = models.CharField(choices=GROUP_NAME, max_length=64, validators=[name_validator])
+    name = models.CharField(max_length=64, validators=[name_validator])
     vars = common_models.JsonDictTextField(default={})
     hosts = models.ManyToManyField('BaseHost', related_name='groups')
     children = models.ManyToManyField('BaseGroup', related_name='parents', blank=True)

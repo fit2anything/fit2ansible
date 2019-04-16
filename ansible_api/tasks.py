@@ -4,7 +4,7 @@ from celery import shared_task
 
 from common.utils import get_object_or_none
 from .models import Playbook, AdHoc, Role, PlaybookExecution, AdHocExecution
-from .ansible.runner import AdHocRunner
+from .ansible.runner import AdHocRunner, PlayBookRunner
 from .ctx import set_current_project, change_to_root
 from .inventory import WithHostInfoInventory
 
@@ -82,6 +82,14 @@ def run_im_adhoc(adhoc_data, inventory_data):
     args = adhoc_data.get('args') or ''
     tasks = [{'action': {'module': module, 'args': args}}]
     result = runner.run(tasks, pattern=pattern)
+    return result
+
+
+@shared_task
+def run_im_playbook(playbook_path, inventory_data):
+    inventory = WithHostInfoInventory(inventory_data)
+    runner = PlayBookRunner(inventory)
+    result = runner.run(playbook_path)
     return result
 
 

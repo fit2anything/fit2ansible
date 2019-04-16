@@ -11,7 +11,7 @@ import signal
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TMP_DIR = os.path.join(BASE_DIR, 'tmp')
-LOG_DIR = os.path.join(BASE_DIR, 'data', 'celery')
+LOG_DIR = os.path.join(BASE_DIR, 'data', 'log')
 VENV = os.environ.get('VENV')
 if VENV:
     OLD_PATH = os.environ.get('PATH')
@@ -23,22 +23,43 @@ else:
 sys.path.append(BASE_DIR)
 os.environ["PYTHONIOENCODING"] = "UTF-8"
 
+try:
+    from fit2ansible.conf import load_user_config
+    CONFIG = load_user_config()
+except ImportError as e:
+    print("Import error: {}".format(e))
+    print("Could not find config file, `cp config_example.yml config.yml`")
+    sys.exit(1)
+
 START_TIMEOUT = 15
 WORKERS = 4
 DAEMON = False
 LOG_LEVEL = 'INFO'
 
 EXIT_EVENT = threading.Event()
-all_services = ['redis', 'gunicorn', 'celery', 'beat']
+all_services = ['gunicorn', 'celery', 'beat', 'websocket']
 
 try:
     os.makedirs(os.path.join(BASE_DIR, "data", "static"), exist_ok=True)
     os.makedirs(os.path.join(BASE_DIR, "data", "media"), exist_ok=True)
     os.makedirs(os.path.join(BASE_DIR, "data", "ansible"), exist_ok=True)
+    os.makedirs(os.path.join(BASE_DIR, "data", "log"), exist_ok=True)
     os.makedirs(LOG_DIR, exist_ok=True)
     os.makedirs(TMP_DIR, exist_ok=True)
 except:
     pass
+
+
+def check_database_connection():
+    for i in range(60):
+        print("Check database connection ...")
+        code = subprocess.call("python manage.py showmigrations auth", shell=True)
+        if code == 0:
+            print("Database connect success")
+            return
+        time.sleep(1)
+    print("Connection database failed, exist")
+    sys.exit(10)
 
 
 def make_migrations():
@@ -53,6 +74,7 @@ def collect_static():
 
 
 def prepare():
+    check_database_connection()
     make_migrations()
     collect_static()
 
@@ -103,31 +125,60 @@ def is_running(s, unlink=True):
 def parse_service(s):
     if s == 'all':
         return all_services
+    elif s == 'web':
+        return ['gunicorn', 'websocket']
+    elif s == 'task':
+        return ['celery', 'beat']
     else:
         return [s]
-
-
-def start_redis():
-    print("\n- Start redis")
-    p = subprocess.Popen("redis-server", stdout=sys.stdout, stderr=sys.stderr)
-
-    pid_file = get_pid_file_path('redis')
-    with open(pid_file, 'w') as f:
-        f.write(str(p.pid))
-    return p
 
 
 def start_gunicorn():
     print("\n- Start Gunicorn WSGI HTTP Server")
     prepare()
-    bind = '{}:{}'.format('0.0.0.0', 8080)
+    service = 'gunicorn'
+    bind = '{}:{}'.format(CONFIG.HTTP_BIND_HOST, CONFIG.HTTP_LISTEN_PORT)
+    log_format = '%(h)s %(t)s "%(r)s" %(s)s %(b)s '
+    pid_file = get_pid_file_path(service)
+
     cmd = [
-        'python', 'manage.py',
-        'runserver', bind
+        'gunicorn', 'fit2ansible.wsgi',
+        '-b', bind,
+        # '-k', 'eventlet',
+        '-k', 'gthread',
+        '--threads', '10',
+        '-w', str(WORKERS),
+        '--max-requests', '4096',
+        '--access-logformat', log_format,
+        '-p', pid_file,
     ]
+    if DAEMON:
+        cmd.extend([
+            '--daemon',
+        ])
+    else:
+        cmd.extend([
+            '--access-logfile', '-'
+        ])
 
     p = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr)
     pid_file = get_pid_file_path('gunicorn')
+    with open(pid_file, 'w') as f:
+        f.write(str(p.pid))
+    return p
+
+
+def start_websocket():
+    service = 'websocket'
+    host = CONFIG.HTTP_BIND_HOST
+    port = str(CONFIG.HTTP_LISTEN_PORT + 1)
+    cmd = [
+        'daphne', 'fit2ansible.asgi:application',
+        '-b', host,
+        '-p', port,
+    ]
+    p = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr)
+    pid_file = get_pid_file_path(service)
     with open(pid_file, 'w') as f:
         f.write(str(p.pid))
     return p
@@ -190,10 +241,10 @@ def start_beat():
 def start_service(s):
     print(time.ctime())
     services_handler = {
-         "redis": start_redis,
-         "gunicorn": start_gunicorn,
-         "celery": start_celery,
-         "beat": start_beat
+        "gunicorn": start_gunicorn,
+        "celery": start_celery,
+        "beat": start_beat,
+        "websocket": start_websocket,
     }
     services_set = parse_service(s)
     processes = []
@@ -285,7 +336,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "service", type=str, default="all", nargs="?",
-        choices=("all", "gunicorn", "celery", "beat", "redis"),
+        choices=("all", "gunicorn", "celery", "beat", "task", "web"),
         help="The service to start",
     )
     parser.add_argument('-d', '--daemon', nargs="?", const=1)

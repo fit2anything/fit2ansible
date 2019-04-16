@@ -4,10 +4,8 @@ from __future__ import unicode_literals
 from rest_framework import serializers
 
 from .inventory import InventorySerializer
-from .role import SimpleRoleSerializer
 from .playbook import PlaySerializer
 from .adhoc import AdHocSerializer
-from ..models import Playbook
 
 
 __all__ = ['IMPlaybookSerializer', 'IMAdHocSerializer']
@@ -34,37 +32,13 @@ class IMBaseSerializer(serializers.Serializer):
 
 
 class IMPlaybookSerializer(IMBaseSerializer):
-    roles = SimpleRoleSerializer(many=True, required=False, allow_null=True)
     plays = PlaySerializer(many=True)
 
     def create(self, validated_data):
-        self.create_plays()
-        self.create_roles()
-        plays = self.create_plays()
-        playbook = Playbook.objects.create(name=self.project.name, project=self.project)
-        playbook.plays.set(plays)
-        return playbook
+        pass
 
     def update(self, instance, validated_data):
         pass
-
-    def create_roles(self):
-        roles_data = self.validated_data.get('roles')
-        if not roles_data:
-            return
-        serializer = SimpleRoleSerializer(
-            data=roles_data, many=True,
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-
-    def create_plays(self):
-        serializer = PlaySerializer(
-            data=self.validated_data.get('plays'),
-            many=True,
-        )
-        serializer.is_valid(raise_exception=True)
-        return serializer.save()
 
 
 class IMAdHocSerializer(IMBaseSerializer):
