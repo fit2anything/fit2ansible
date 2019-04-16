@@ -8,6 +8,7 @@ RUN cd /tmp/requirements && yum -y install epel-release && yum -y install $(cat 
 RUN cd /tmp/requirements && \
      pip install --upgrade pip setuptools -i https://mirrors.aliyun.com/pypi/simple/ && \
      pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ || pip install -r requirements.txt
+RUN sed -i "s@'uri': True@'uri': False@g" /opt/py3/lib/python3.6/site-packages/django/db/backends/sqlite3/base.py
 RUN test -f /root/.ssh/id_rsa || ssh-keygen -f /root/.ssh/id_rsa -t rsa -P ''
 RUN echo -e "Host *\n\tStrictHostKeyChecking no\n\tUserKnownHostsFile /dev/null" > /root/.ssh/config
 
