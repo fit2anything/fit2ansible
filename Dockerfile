@@ -1,6 +1,6 @@
 FROM registry.fit2cloud.com/public/python:v3
 MAINTAINER Fit2Openshift Team <support@fit2cloud.com>
-WORKDIR /opt/fit2openshift-api
+WORKDIR /opt/fit2openshift
 
 RUN echo -e '[mysql]\nname = mysql\nbaseurl = http://mirrors.ustc.edu.cn/mysql-repo/yum/mysql-5.7-community/el/6/$basearch/\ngpgcheck = 0' > /etc/yum.repos.d/mysql.repo
 COPY ./requirements /tmp/requirements
@@ -21,4 +21,5 @@ ENV PYTHONOPTIMIZE=1
 ENV C_FORCE_ROOT=1
 
 EXPOSE 8080
-ENTRYPOINT ["sh", "-c", "python entrypoint.py start"]
+EXPOSE 8081
+ENTRYPOINT ["./entrypoint.sh"]
