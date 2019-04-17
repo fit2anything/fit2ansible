@@ -218,7 +218,6 @@ def format_task_result(raw):
     _summary = raw.get('summary', {})
     summary['success'] = _summary.pop('success', False)
     for status, result in _summary.items():
-        print(result)
         for hostname, _tasks in result.items():
             tasks = []
             for task_name, detail in _tasks.items():
