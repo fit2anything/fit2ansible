@@ -1,2 +1,6 @@
-DB_NAME=sqlite3.db
-DB_ENGINE=sqlite
+SECRET_KE: PleaseChangeMe
+DB_NAME: sqlite3.db
+DB_ENGINE: sqlite
+# REDIS_HOST: 127.0.0.1
+# REDIS_PORT: 6380
+# REDIS_PASSWORD:

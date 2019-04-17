@@ -23,6 +23,8 @@ class IMBaseSerializer(serializers.Serializer):
             raise serializers.ValidationError("hosts is null")
 
         for host in hosts:
+            if not host.get('name') or host.get('hostname'):
+                host['name'] = host.pop('hostname')
             if not host.get('name'):
                 raise serializers.ValidationError({"hosts", "name is null"})
 

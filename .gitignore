@@ -20,3 +20,4 @@ dump.rdb
 sqlite3.db
 build_to_registry.sh
 data/*
+config.yml

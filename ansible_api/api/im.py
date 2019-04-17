@@ -8,6 +8,7 @@ Immediately run adhoc and playbook
 import tempfile
 from rest_framework import permissions, generics
 from rest_framework.response import Response
+import logging
 
 from ..models import Play
 from ..serializers import IMPlaybookSerializer, IMAdHocSerializer
@@ -29,9 +30,9 @@ class IMPlaybookApi(generics.CreateAPIView):
             plays_yaml = Play.get_plays_data(plays, fmt='yaml')
             f = tempfile.NamedTemporaryFile(mode='wt', delete=False, suffix='.yml')
             f.write(plays_yaml)
-            print(f.name)
+            logging.debug("Playbook path: {}".format(f.name))
+            f.close()
             task = run_im_playbook.delay(f.name, inventory_data)
-            # return Response({'ok': 1})
             return Response({'task': task.id})
         else:
             return Response({"error": serializer.errors})
