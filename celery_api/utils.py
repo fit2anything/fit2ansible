@@ -212,3 +212,17 @@ def get_celery_task_log_path(task_id):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     return path
 
+
+def format_task_result(raw):
+    summary = {"contacted": [], "dark": []}
+    _summary = raw.get('summary', {})
+    summary['success'] = _summary.pop('success', False)
+    for status, result in _summary.items():
+        print(result)
+        for hostname, _tasks in result.items():
+            tasks = []
+            for task_name, detail in _tasks.items():
+                detail["task"] = task_name
+                tasks.append(detail)
+            summary[status].append({"hostname": hostname, "tasks": tasks})
+    return summary

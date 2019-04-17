@@ -6,10 +6,10 @@ from celery.result import AsyncResult
 
 from common.api import LogTailApi
 from .serializers import TaskResultSerializer
-from .utils import get_celery_task_log_path
+from .utils import get_celery_task_log_path, format_task_result
 
 
-__all__ = ['TaskResultApi', 'TaskLogApi']
+__all__ = ['TaskResultApi', 'TaskLogApi', 'IMTaskResultApi']
 
 
 class TaskResultApi(generics.RetrieveAPIView):
@@ -20,6 +20,23 @@ class TaskResultApi(generics.RetrieveAPIView):
         task = AsyncResult(str(task_id))
         if not task:
             task = {'result': '', 'state': 'Pending'}
+        return task
+
+
+class IMTaskResultApi(generics.RetrieveAPIView):
+    serializer_class = TaskResultSerializer
+
+    def get_object(self):
+        task_id = self.kwargs.get('pk')
+        task = AsyncResult(str(task_id))
+        if not task:
+            task = {'result': '', 'state': 'Pending'}
+        else:
+            task = {
+                'state': task.state,
+                'result': format_task_result(task.result),
+                'id': task.id
+            }
         return task
 
 
