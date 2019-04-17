@@ -320,7 +320,7 @@ defaults = {
     'REDIS_DB_CELERY': 3,
     'REDIS_DB_CACHE': 4,
     'HTTP_BIND_HOST': '0.0.0.0',
-    'HTTP_LISTEN_PORT': 8080,
+    'HTTP_LISTEN_PORT': 8000,
 }
 
 
