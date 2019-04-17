@@ -28,15 +28,12 @@ class IMTaskResultApi(generics.RetrieveAPIView):
 
     def get_object(self):
         task_id = self.kwargs.get('pk')
-        task = AsyncResult(str(task_id))
-        if not task:
+        _task = AsyncResult(str(task_id))
+        if not _task:
             task = {'result': '', 'state': 'Pending'}
-        else:
-            task = {
-                'state': task.state,
-                'result': format_task_result(task.result),
-                'id': task.id
-            }
+            return task
+        task = {'state': _task.state, 'id': _task.id}
+        task['result'] = format_task_result(_task.result) if _task.result else None
         return task
 
 
