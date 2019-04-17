@@ -133,10 +133,6 @@ class AdHocRunner:
             )
 
     def clean_args(self, module, args):
-        print("Module: .............")
-        print(module)
-        print("Raw args: ........")
-        print(args)
         if module not in self.command_modules_choices:
             return args
         if not isinstance(args, str):
@@ -147,8 +143,6 @@ class AdHocRunner:
             args = {'executable': executable, '_raw_params':  command}
         else:
             args = {'_raw_params':  args}
-        print("Args: ...............")
-        print(args)
         return args
 
     def clean_tasks(self, tasks):
@@ -157,7 +151,7 @@ class AdHocRunner:
             module = task['action']['module']
             args = task['action'].get('args')
             cleaned_args = self.clean_args(module, args)
-            task['args'] = cleaned_args
+            task['action']['args'] = cleaned_args
             self.check_module_args(module, cleaned_args)
             cleaned_tasks.append(task)
         return cleaned_tasks
