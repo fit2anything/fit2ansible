@@ -19,7 +19,7 @@ __all__ = ['ClusterHost', 'ClusterGroup', 'Host', 'Group', 'Inventory']
 
 
 class BaseHost(models.Model):
-    name = models.CharField(max_length=256, validators=[name_validator])
+    name = models.CharField(max_length=256)
     ip = models.GenericIPAddressField(null=True)
     port = models.IntegerField(default=22)
     username = models.CharField(max_length=256, default='root')
@@ -101,7 +101,7 @@ class Host(AbstractProjectResourceModel, BaseHost):
 
 
 class BaseGroup(models.Model):
-    name = models.CharField(max_length=64, validators=[name_validator])
+    name = models.CharField(max_length=64)
     vars = common_models.JsonDictTextField(default={})
     hosts = models.ManyToManyField('BaseHost', related_name='groups')
     children = models.ManyToManyField('BaseGroup', related_name='parents', blank=True)

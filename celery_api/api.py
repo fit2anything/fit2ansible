@@ -25,6 +25,7 @@ class TaskResultApi(generics.RetrieveAPIView):
 
 class IMTaskResultApi(generics.RetrieveAPIView):
     serializer_class = TaskResultSerializer
+    permission_classes = ()
 
     def get_object(self):
         task_id = self.kwargs.get('pk')
