@@ -31,7 +31,7 @@ except ImportError as e:
     print("Could not find config file, `cp config_example.yml config.yml`")
     sys.exit(1)
 
-START_TIMEOUT = 15
+START_TIMEOUT = 60
 WORKERS = 4
 DAEMON = False
 LOG_LEVEL = 'INFO'
