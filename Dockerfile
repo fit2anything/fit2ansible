@@ -2,7 +2,6 @@ FROM registry.fit2cloud.com/public/python:v3
 MAINTAINER Fit2Ansible Team <support@fit2cloud.com>
 WORKDIR /opt/fit2ansible
 
-RUN echo -e '[mysql]\nname = mysql\nbaseurl = http://mirrors.ustc.edu.cn/mysql-repo/yum/mysql-5.7-community/el/6/$basearch/\ngpgcheck = 0' > /etc/yum.repos.d/mysql.repo
 COPY ./requirements /tmp/requirements
 RUN cd /tmp/requirements && yum -y install epel-release && \
     rpm -ivh https://repo.mysql.com/mysql57-community-release-el6.rpm && \
