@@ -4,7 +4,9 @@ WORKDIR /opt/fit2ansible
 
 RUN echo -e '[mysql]\nname = mysql\nbaseurl = http://mirrors.ustc.edu.cn/mysql-repo/yum/mysql-5.7-community/el/6/$basearch/\ngpgcheck = 0' > /etc/yum.repos.d/mysql.repo
 COPY ./requirements /tmp/requirements
-RUN cd /tmp/requirements && yum -y install epel-release && yum -y install $(cat rpm_requirements.txt)
+RUN cd /tmp/requirements && yum -y install epel-release && \
+    rpm -ivh https://repo.mysql.com/mysql57-community-release-el6.rpm && \
+    yum -y install $(cat rpm_requirements.txt)
 RUN cd /tmp/requirements && \
      pip install --upgrade pip setuptools -i https://mirrors.aliyun.com/pypi/simple/ && \
      pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ || pip install -r requirements.txt
