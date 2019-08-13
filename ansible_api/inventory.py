@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 #
 
+import os
+from hashlib import md5
+
+from django.conf import settings
+
 from .ansible.inventory import BaseInventory
 
 
@@ -280,18 +285,22 @@ class WithHostInfoInventory(BaseInventory):
         return {'hosts': hosts, 'groups': groups}
 
     def _parse_hosts(self):
+        from .models import Host
         hosts = []
         _hosts = self.inventory_data.get('hosts', [])
-        for host in _hosts:
-            _vars = host.get('vars', {})
+        for host_info in _hosts:
+            host = Host(**host_info)
+            _vars = host_info.get('vars', {})
+
             _vars.update({
-                'ansible_ssh_host': host.get('ip') or host['name'],
-                'ansible_ssh_port': host.get('port') or 22,
-                'ansible_ssh_user': host.get('username'),
-                'ansible_ssh_pass': host.get('password'),
+                'ansible_ssh_host': host.ip or host.name,
+                'ansible_ssh_port': host.port or 22,
+                'ansible_ssh_user': host.username,
+                'ansible_ssh_pass': host.password,
+                'ansible_ssh_private_key_file': host.private_key_path
             })
             hosts.append({
-                'hostname': host['name'],
+                'hostname': host.name or host.ip,
                 'vars': _vars
             })
         return hosts
