@@ -2,6 +2,7 @@
 import logging
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
+from .ansible.runner import AnsibleError
 
 from common.utils import get_object_or_none
 from .models import Playbook, AdHoc, Role, PlaybookExecution, AdHocExecution
@@ -87,6 +88,9 @@ def run_im_adhoc(adhoc_data, inventory_data):
         return result
     except SoftTimeLimitExceeded:
         print("Run task timeout")
+    except AnsibleError as e:
+        if str(e).startswith("SoftTime"):
+            print("Run task timeout")
 
 
 @shared_task
