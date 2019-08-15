@@ -44,10 +44,15 @@ class IMAdHocApi(generics.CreateAPIView):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
+        adhoc = serializer.get("adhoc")
+        inventory = serializer.get("inventory")
+        kwargs = {}
+        timeout = self.request.query_params.get('timeout')
+        if timeout:
+            kwargs["soft_timeout"] = timeout
         if serializer.is_valid():
-            task = run_im_adhoc.delay(
-                serializer.validated_data.get('adhoc'),
-                serializer.validated_data.get('inventory'),
+            task = run_im_adhoc.apply_async(
+                args=(adhoc, inventory), **kwargs
             )
             return Response({'task': task.id})
         else:

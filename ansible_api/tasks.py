@@ -1,6 +1,7 @@
 # coding: utf-8
 import logging
 from celery import shared_task
+from celery.exceptions import SoftTimeLimitExceeded
 
 from common.utils import get_object_or_none
 from .models import Playbook, AdHoc, Role, PlaybookExecution, AdHocExecution
@@ -81,8 +82,11 @@ def run_im_adhoc(adhoc_data, inventory_data):
     module = adhoc_data.get('module') or 'ping'
     args = adhoc_data.get('args') or ''
     tasks = [{'action': {'module': module, 'args': args}}]
-    result = runner.run(tasks, pattern=pattern)
-    return result
+    try:
+        result = runner.run(tasks, pattern=pattern)
+        return result
+    except SoftTimeLimitExceeded:
+        print("Run task timeout")
 
 
 @shared_task

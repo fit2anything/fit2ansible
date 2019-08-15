@@ -321,6 +321,7 @@ defaults = {
     'REDIS_DB_CACHE': 4,
     'HTTP_BIND_HOST': '0.0.0.0',
     'HTTP_LISTEN_PORT': 8000,
+    'CELERY_TASK_SOFT_TIME_LIMIT': 3600,
 }
 
 
