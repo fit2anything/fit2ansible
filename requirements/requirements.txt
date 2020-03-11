@@ -75,4 +75,5 @@ djangorestframework-jwt==1.11.0
 mysqlclient
 daphne==2.2.2
 django-redis-sessions==0.6.1
-pywinrm
+pywinrm==0.4.1
+pywinrm[credssp]
