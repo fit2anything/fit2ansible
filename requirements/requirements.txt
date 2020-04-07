@@ -23,7 +23,6 @@ djangorestframework==3.8.2
 djangorestframework-bulk==0.2.1
 drf-nested-routers==0.90.2
 drf-yasg==1.10.2
-flex==6.13.2
 future==0.16.0
 gitdb2==2.0.4
 GitPython==2.1.11
