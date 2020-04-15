@@ -75,4 +75,4 @@ mysqlclient
 daphne==2.2.2
 django-redis-sessions==0.6.1
 pywinrm==0.4.1
-pywinrm[credssp]
+requests-credssp==1.1.1
